@@ -43,10 +43,7 @@ void timerInit(void) {
     INTCONbits.GIE = 1;
 }
 
-void main(void) {
- 
-    int Count = 0; 
-    
+void portInit(void) {       
     ADCON0 = 0xA0; // ADC clock source is INTOSC/4
                     // ADC not running
                     // ADC enabled
@@ -74,7 +71,12 @@ void main(void) {
     
 //    PORTCbits.RC5 = 1; //raise C.5.
 //    PORTCbits.RC1 = 1; //raise C.1.
- 
+}
+
+int Count = 0; 
+
+void main(void) {
+    portInit();
     timerInit();
   
     PORTCbits.RC5 = 0;
@@ -84,10 +86,10 @@ void main(void) {
         //PORTCbits.RC5 = 1;
         TMR0bits.TMR0 = 0;
         Count ++;
-        if (Count == 5000) {
+        if (Count == 14) {
             PORTCbits.RC5 = 1;
         }
-        if (Count == 10000) {
+        if (Count == 3650) {
             PORTCbits.RC5 = 0;
             Count = 0;
         }
