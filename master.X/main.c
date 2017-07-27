@@ -80,20 +80,50 @@ void main(void) {
     timerInit();
   
     PORTCbits.RC5 = 0;
-    
-    while(1) {     
-        while(!TMR0bits.TMR0);
-        //PORTCbits.RC5 = 1;
-        TMR0bits.TMR0 = 0;
-        Count ++;
-        if (Count == 14) {
-            PORTCbits.RC5 = 1;
+  
+    //code for testing large line pulldown
+    while(1) {
+        if (PORTBbits.RB6 == 0) {
+            TRISC = 0xFF;
+
         }
-        if (Count == 3650) {
-            PORTCbits.RC5 = 0;
-            Count = 0;
+        if (PORTBbits.RB6 == 1) {
+            TRISC = 0x00;
         }
     }
+    
+    //code to toggle RC5 as RUI talked about
+//    while(1) {
+//        while(!TMR0bits.TMR0);
+//        //PORTCbits.RC5 = 1;
+//        TMR0bits.TMR0 = 0;
+//        Count ++;
+//        if (Count == 10000) {
+//            TRISC = 0xFF;
+//            //PORTCbits.RC5 = 0;
+//        }
+//        if (Count == 20000) {
+//            TRISC = 0x00;
+//            //PORTCbits.RC5 = 1;
+//            Count = 0;
+//        }
+//    }
+    
+    
+    //CODE FOR 2ms, 2Hz
+//    while(1) {     
+//        while(!TMR0bits.TMR0);
+//        //PORTCbits.RC5 = 1;
+//        TMR0bits.TMR0 = 0;
+//        Count ++;
+//        if (Count == 14) {
+//            PORTCbits.RC5 = 1;
+//        }
+//        if (Count == 3650) {
+//            PORTCbits.RC5 = 0;
+//            Count = 0;
+//        }
+//    }
     
 //    while (1) {
 //        if (PORTBbits.RB6 == 0) {

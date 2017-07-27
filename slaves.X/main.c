@@ -29,8 +29,21 @@
 
 //#define SCL PORTCbits.RC1
 
-void main(void) {
- 
+void timerInit(void) {
+//    OPTION |= 0b00010111; //setting prescaler value to 1:256
+//    OPTION &= 0b11000111; //prescaler assigned to tmr0
+//                          //tmr0 clock source select bit to internal.
+//                          //increments on high to low
+    
+    asm("MOVLW 0x07");	    // LOAD W    
+    asm("OPTION");          // LOAD TRIS PORTA 
+    
+    //enabling interrupts and overflows for TMR0
+    INTCONbits.T0IF = 1;
+    INTCONbits.GIE = 1;
+}
+
+void portInit(void) {       
     ADCON0 = 0xA0; // ADC clock source is INTOSC/4
                     // ADC not running
                     // ADC enabled
@@ -58,18 +71,23 @@ void main(void) {
     
 //    PORTCbits.RC5 = 1; //raise C.5.
 //    PORTCbits.RC1 = 1; //raise C.1.
- 
-//    //configuring timer0
-//    OPTION |= 0b00000110; //setting prescaler value to 1:128
-//    OPTION &= 0b11010111; //prescaler assigned to tmr0
-//                          //tmr0 clock source select bit to internal.
-    
-    while (1) {
-        if (PORTBbits.RB6 == 1) {
-            PORTCbits.RC5 = 1;
-        }
-        if (PORTBbits.RB6 == 0) {
-            PORTCbits.RC5 = 0;
-        }
+}
+
+int Count = 0; 
+
+void main(void) {
+    portInit();
+    timerInit();
+  
+    PORTCbits.RC5 = 0;
+  
+    while(1) {
+        TRISC = 0xFF;
     }
+//        if (PORTBbits.RB6 == 1) {
+//            PORTCbits.RC5 = 1;
+//        }
+//        if (PORTBbits.RB6 == 0) {
+//            PORTCbits.RC5 = 0;
+//        }
 }
