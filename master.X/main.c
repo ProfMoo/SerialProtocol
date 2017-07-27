@@ -21,16 +21,32 @@
  #pragma config BOREN = ON       // Brown-out Reset Enable (BOR Enabled)     
  #pragma config DRTEN = ON      // Device Reset Timer Enable (DRT Enabled) 
 
- #ifndef _XTAL_FREQ
- #define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
- #define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
- #define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
- #endif
+// #ifndef _XTAL_FREQ
+// #define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
+// #define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
+// #define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
+// #endif
 
 //#define SCL PORTCbits.RC1
 
+void timerInit(void) {
+//    OPTION |= 0b00010111; //setting prescaler value to 1:256
+//    OPTION &= 0b11000111; //prescaler assigned to tmr0
+//                          //tmr0 clock source select bit to internal.
+//                          //increments on high to low
+    
+    asm("MOVLW 0x07");	    // LOAD W    
+    asm("OPTION");          // LOAD TRIS PORTA 
+    
+    //enabling interrupts and overflows for TMR0
+    INTCONbits.T0IF = 1;
+    INTCONbits.GIE = 1;
+}
+
 void main(void) {
  
+    int Count = 0; 
+    
     ADCON0 = 0xA0; // ADC clock source is INTOSC/4
                     // ADC not running
                     // ADC enabled
@@ -59,20 +75,33 @@ void main(void) {
 //    PORTCbits.RC5 = 1; //raise C.5.
 //    PORTCbits.RC1 = 1; //raise C.1.
  
-//    //configuring timer0
-//    OPTION |= 0b00000110; //setting prescaler value to 1:128
-//    OPTION &= 0b11010111; //prescaler assigned to tmr0
-//                          //tmr0 clock source select bit to internal.
+    timerInit();
+  
+    PORTCbits.RC5 = 0;
     
-    while (1) {
-        if (PORTBbits.RB6 == 0) {
+    while(1) {     
+        while(!TMR0bits.TMR0);
+        //PORTCbits.RC5 = 1;
+        TMR0bits.TMR0 = 0;
+        Count ++;
+        if (Count == 5000) {
             PORTCbits.RC5 = 1;
-            __delay_ms(500);
-            PORTCbits.RC5 = 0;
-            __delay_ms(500);
         }
-        if (PORTBbits.RB6 == 1) {
+        if (Count == 10000) {
             PORTCbits.RC5 = 0;
+            Count = 0;
         }
     }
+    
+//    while (1) {
+//        if (PORTBbits.RB6 == 0) {
+//            PORTCbits.RC5 = 1;
+//            __delay_ms(500);
+//            PORTCbits.RC5 = 0;
+//            __delay_ms(500);
+//        }
+//        if (PORTBbits.RB6 == 1) {
+//            PORTCbits.RC5 = 0;
+//        }
+//    }
 }

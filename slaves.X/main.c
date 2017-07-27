@@ -65,10 +65,10 @@ void main(void) {
 //                          //tmr0 clock source select bit to internal.
     
     while (1) {
-        if (PORTBbits.RB6 == 0) {
+        if (PORTBbits.RB6 == 1) {
             PORTCbits.RC5 = 1;
         }
-        if (PORTBbits.RB6 == 1) {
+        if (PORTBbits.RB6 == 0) {
             PORTCbits.RC5 = 0;
         }
     }
