@@ -79,16 +79,17 @@ void main(void) {
     portInit();
     timerInit();
   
-    PORTCbits.RC5 = 0;
+    PORTCbits.RC5 = 0; //seting the clock line to low (to be controlled by setting input vs. output)
+    PORTCbits.RC1 = 1; //the bit to be transfered
   
     //code for testing large line pulldown
     while(1) {
         if (PORTBbits.RB6 == 0) {
-            TRISC = 0xFF;
+            TRISC = 0xFF; //setting clock high, setting as input
 
         }
         if (PORTBbits.RB6 == 1) {
-            TRISC = 0x00;
+            TRISC = 0x00; //setting clock low, setting as output
         }
     }
     

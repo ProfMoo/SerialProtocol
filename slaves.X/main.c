@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pic16f527.h>
+#include <stdint.h>  
 
  // CONFIG     
  #pragma config FOSC = INTRC_IO  // Oscillator Selection (INTRC with I/O function on OSC2/CLKOUT and 10 us startup time)     
@@ -28,6 +29,9 @@
  #endif
 
 //#define SCL PORTCbits.RC1
+
+int Count = 0;
+uint8_t received = 0;
 
 void timerInit(void) {
 //    OPTION |= 0b00010111; //setting prescaler value to 1:256
@@ -73,16 +77,34 @@ void portInit(void) {
 //    PORTCbits.RC1 = 1; //raise C.1.
 }
 
-int Count = 0; 
+uint8_t readByte(void) {
+    return received;
+}
 
 void main(void) {
     portInit();
     timerInit();
   
+    TRISC = 0xF0;
     PORTCbits.RC5 = 0;
+    
   
     while(1) {
-        TRISC = 0xFF;
+        while (PORTCbits.RC5 == 1);
+//        received = PORTBbits.RB6; //set received to the data line
+//        if (received == 1) { //checking data line value
+//            //TRISC = 0x00;
+//            PORTCbits.RC1 == 1; //if data is correct, send to LED
+//        }
+        
+        //only gets here if clock goes low
+        if (PORTBbits.RB6 == 1) 
+            PORTCbits.RC1 = 1;
+        if (PORTBbits.RB6 == 0)
+            PORTCbits.RC1 = 0;
+        
+        while (PORTCbits.RC5 == 0);
+        
     }
 //        if (PORTBbits.RB6 == 1) {
 //            PORTCbits.RC5 = 1;
