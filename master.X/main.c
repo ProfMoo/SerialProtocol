@@ -36,7 +36,7 @@ void timerInit(void) {
 //                          //increments on high to low
     
     asm("MOVLW 0x07");	    // LOAD W    
-    asm("OPTION");          // LOAD TRIS PORTA 
+    asm("OPTION");          // LOAD OPTION 
     
     //enabling interrupts and overflows for TMR0
     INTCONbits.T0IF = 1;

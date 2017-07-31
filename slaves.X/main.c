@@ -32,6 +32,8 @@
 
 int Count = 0;
 uint8_t received = 0;
+uint8_t counter = 0;
+uint8_t readin = 0;
 
 void timerInit(void) {
 //    OPTION |= 0b00010111; //setting prescaler value to 1:256
@@ -78,7 +80,43 @@ void portInit(void) {
 }
 
 uint8_t readByte(void) {
-    return received;
+    uint8_t i = 0;
+    uint8_t newbyte = 0;
+    while (i < 8) {
+        while (PORTCbits.RC5 == 1); //wait for the clock to go low
+        __delay_ms(3000);
+
+//        if (PORTBbits.RB6 == 1) {
+//            PORTCbits.RC1 = 1;
+//        }
+//        if (PORTBbits.RB6 == 0) {
+//            PORTCbits.RC1 = 0;
+//        }
+            
+        readin = PORTBbits.RB6;
+        
+        //confirming a bits low or high
+        if (readin == 1) {
+            PORTCbits.RC1 = 1;
+        }
+        if (readin == 0) {
+            PORTCbits.RC1 = 0;
+        }
+        PORTCbits.RC2 = 1; //a singular bit has been received
+        
+        newbyte = newbyte << 1; //leftshift
+        newbyte += readin; //add the bit to the unsigned int
+        
+//        if (newbyte == 0x02) {
+//            PORTCbits.RC0 = 1; //should go off after sending a one then a zero
+//        }
+        
+        while (PORTCbits.RC5 == 0); //wait for the clock to go back high
+        __delay_ms(3000);
+        PORTCbits.RC2 = 0; //showing that the clock has gone back low
+        i += 1;
+    }
+    return newbyte;
 }
 
 void main(void) {
@@ -88,28 +126,24 @@ void main(void) {
     TRISC = 0xF0;
     PORTCbits.RC5 = 0;
     
-  
-    while(1) {
-        while (PORTCbits.RC5 == 1);
-//        received = PORTBbits.RB6; //set received to the data line
-//        if (received == 1) { //checking data line value
-//            //TRISC = 0x00;
-//            PORTCbits.RC1 == 1; //if data is correct, send to LED
-//        }
-        
-        //only gets here if clock goes low
-        if (PORTBbits.RB6 == 1) 
-            PORTCbits.RC1 = 1;
-        if (PORTBbits.RB6 == 0)
-            PORTCbits.RC1 = 0;
-        
-        while (PORTCbits.RC5 == 0);
-        
+    counter = readByte();
+    if (counter == 0x4A) {
+        PORTCbits.RC0 = 1;
     }
-//        if (PORTBbits.RB6 == 1) {
-//            PORTCbits.RC5 = 1;
-//        }
-//        if (PORTBbits.RB6 == 0) {
-//            PORTCbits.RC5 = 0;
-//        }
+    //PORTCbits.RC0 = 1;
+    
+    while(1);
+  
+    //code to read a single bit
+//    while(1) {
+//        while (PORTCbits.RC5 == 1);
+//
+//        if (PORTBbits.RB6 == 1) 
+//            PORTCbits.RC1 = 1;
+//        if (PORTBbits.RB6 == 0)
+//            PORTCbits.RC1 = 0;
+//        
+//        while (PORTCbits.RC5 == 0);
+//        
+//    }
 }
