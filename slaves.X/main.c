@@ -84,14 +84,6 @@ uint8_t readByte(void) {
     uint8_t newbyte = 0;
     while (i < 8) {
         while (PORTCbits.RC5 == 1); //wait for the clock to go low
-        __delay_ms(3000);
-
-//        if (PORTBbits.RB6 == 1) {
-//            PORTCbits.RC1 = 1;
-//        }
-//        if (PORTBbits.RB6 == 0) {
-//            PORTCbits.RC1 = 0;
-//        }
             
         readin = PORTBbits.RB6;
         
@@ -102,7 +94,8 @@ uint8_t readByte(void) {
         if (readin == 0) {
             PORTCbits.RC1 = 0;
         }
-        PORTCbits.RC2 = 1; //a singular bit has been received
+        
+        //PORTCbits.RC2 = 1; //a singular bit has been received
         
         newbyte = newbyte << 1; //leftshift
         newbyte += readin; //add the bit to the unsigned int
@@ -112,8 +105,8 @@ uint8_t readByte(void) {
 //        }
         
         while (PORTCbits.RC5 == 0); //wait for the clock to go back high
-        __delay_ms(3000);
-        PORTCbits.RC2 = 0; //showing that the clock has gone back low
+
+        //PORTCbits.RC2 = 0; //showing that the clock has gone back low
         i += 1;
     }
     return newbyte;
@@ -126,9 +119,13 @@ void main(void) {
     TRISC = 0xF0;
     PORTCbits.RC5 = 0;
     
-    counter = readByte();
-    if (counter == 0x4A) {
-        PORTCbits.RC0 = 1;
+    while (1) {
+        while (PORTCbits.RC5 == 1); //wait for the ACK
+        __delay_us(1500);
+        counter = readByte();
+        if (counter == 0x6C) {
+            PORTCbits.RC0 = 1;
+        }
     }
     //PORTCbits.RC0 = 1;
     

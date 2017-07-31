@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pic16f527.h>
+#include <stdint.h>  
 
  // CONFIG     
  #pragma config FOSC = INTRC_IO  // Oscillator Selection (INTRC with I/O function on OSC2/CLKOUT and 10 us startup time)     
@@ -21,13 +22,16 @@
  #pragma config BOREN = ON       // Brown-out Reset Enable (BOR Enabled)     
  #pragma config DRTEN = ON      // Device Reset Timer Enable (DRT Enabled) 
 
-// #ifndef _XTAL_FREQ
-// #define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
-// #define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
-// #define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
-// #endif
+ #ifndef _XTAL_FREQ
+ #define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
+ #define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
+ #define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
+ #endif
 
-//#define SCL PORTCbits.RC1
+void interrupt tc_int(void) {
+//    TMR0bits.TMR0 = 0;
+//    TRISC = 0xFF;
+}
 
 void timerInit(void) {
 //    OPTION |= 0b00010111; //setting prescaler value to 1:256
@@ -35,6 +39,8 @@ void timerInit(void) {
 //                          //tmr0 clock source select bit to internal.
 //                          //increments on high to low
     
+    //possible try this:
+    //asm(CLRWDT);
     asm("MOVLW 0x07");	    // LOAD W    
     asm("OPTION");          // LOAD OPTION 
     
@@ -75,23 +81,60 @@ void portInit(void) {
 
 int Count = 0; 
 
+void sendByte(uint8_t byte2send) {
+    int i = 0;
+    while (i < 8) {  
+        if (byte2send%2 == 0) {
+            PORTCbits.RC0 = 0; //updating data line
+        }
+        if (byte2send%2 == 1) {
+            PORTCbits.RC0 = 1; //updating data line
+        }
+        byte2send = byte2send >> 1;
+        
+        __delay_us(5);
+        
+        TRISC = 0x00; //setting clock low, setting as output
+        PORTCbits.RC5 = 0;
+        __delay_us(50);
+        TRISC = 0xF0; //setting clock high, setting as input
+        __delay_us(50);
+        i += 1;
+    }
+    
+}
+
 void main(void) {
     portInit();
     timerInit();
   
-    PORTCbits.RC5 = 0; //seting the clock line to low (to be controlled by setting input vs. output)
-    PORTCbits.RC1 = 1; //the bit to be transfered
-  
-    //code for testing large line pulldown
+    PORTCbits.RC5 = 0;
+    TRISC = 0xF0;
+    
+    //code to send a byte
     while(1) {
-        if (PORTBbits.RB6 == 0) {
-            TRISC = 0xFF; //setting clock high, setting as input
-
-        }
-        if (PORTBbits.RB6 == 1) {
-            TRISC = 0x00; //setting clock low, setting as output
-        }
+        TRISC = 0x00; //setting clock low, setting as output
+        PORTCbits.RC5 = 0;
+        __delay_ms(1);
+        //__delay_us(1500);
+        TRISC = 0xF0; //setting clock high, setting as input
+        __delay_ms(1);
+        
+        
+        sendByte(0x36);
+        __delay_ms(50);
     }
+    
+//    //code for testing large line pulldown
+//    while(1) {
+//        if (PORTBbits.RB6 == 0) {
+//            TRISC = 0xFF; //setting clock high, setting as input
+//
+//        }
+//        if (PORTBbits.RB6 == 1) {
+//            TRISC = 0x00; //setting clock low, setting as output
+//        }
+//    }
     
     //code to toggle RC5 as RUI talked about
 //    while(1) {
@@ -123,18 +166,6 @@ void main(void) {
 //        if (Count == 3650) {
 //            PORTCbits.RC5 = 0;
 //            Count = 0;
-//        }
-//    }
-    
-//    while (1) {
-//        if (PORTBbits.RB6 == 0) {
-//            PORTCbits.RC5 = 1;
-//            __delay_ms(500);
-//            PORTCbits.RC5 = 0;
-//            __delay_ms(500);
-//        }
-//        if (PORTBbits.RB6 == 1) {
-//            PORTCbits.RC5 = 0;
 //        }
 //    }
 }
