@@ -31,6 +31,7 @@
 void interrupt tc_int(void) {
 //    TMR0bits.TMR0 = 0;
 //    TRISC = 0xFF;
+    //not tested yet at all
 }
 
 void timerInit(void) {
@@ -81,27 +82,68 @@ void portInit(void) {
 
 int Count = 0; 
 
+void clock_low(void) {
+    TRISC = 0x00; //setting clock low, setting as output
+    PORTCbits.RC5 = 0; //setting port output as 0
+}
+
+void clock_high(void) {
+    TRISC = 0xF0; //setting clock high, setting as input
+}
+
+void data_low(void) {
+    PORTCbits.RC0 = 0; //data low 
+}
+
+void data_high(void) {
+    PORTCbits.RC0 = 1; //setting data high
+}
+
+void five_delay(void) {
+    __delay_us(5);
+}
+
+void start_condition(void) {
+    //start command
+    clock_low();
+    five_delay();
+    data_low();
+    five_delay();
+    clock_high();
+    five_delay();
+    data_high();
+}
+
+void stop_condition(void) {
+    data_low();
+    five_delay();
+    clock_low();
+    five_delay();
+    data_high();
+    five_delay();
+    clock_high();
+}
+
 void sendByte(uint8_t byte2send) {
     int i = 0;
     while (i < 8) {  
         if (byte2send%2 == 0) {
-            PORTCbits.RC0 = 0; //updating data line
+            data_low(); //updating data line
         }
         if (byte2send%2 == 1) {
-            PORTCbits.RC0 = 1; //updating data line
+            data_high(); //updating data line
         }
         byte2send = byte2send >> 1;
         
         __delay_us(5);
         
-        TRISC = 0x00; //setting clock low, setting as output
-        PORTCbits.RC5 = 0;
+        clock_low();
         __delay_us(50);
-        TRISC = 0xF0; //setting clock high, setting as input
+        clock_high();
         __delay_us(50);
         i += 1;
     }
-    
+    PORTCbits.RC0 = 1;
 }
 
 void main(void) {
@@ -111,18 +153,27 @@ void main(void) {
     PORTCbits.RC5 = 0;
     TRISC = 0xF0;
     
-    //code to send a byte
+    //code to send a full command (3 or 4 bytes)
     while(1) {
-        TRISC = 0x00; //setting clock low, setting as output
-        PORTCbits.RC5 = 0;
+        start_condition();
         __delay_ms(1);
-        //__delay_us(1500);
-        TRISC = 0xF0; //setting clock high, setting as input
+        sendByte(0xAF);
+        sendByte(0x55);
+        sendByte(0x55);
+        sendByte(0x55);
         __delay_ms(1);
-        
-        
-        sendByte(0x36);
-        __delay_ms(50);
+        stop_condition();
+        __delay_ms(10);
+//        TRISC = 0x00; //setting clock low, setting as output
+//        PORTCbits.RC5 = 0;
+//        __delay_ms(1);
+//        //__delay_us(1500);
+//        TRISC = 0xF0; //setting clock high, setting as input
+//        __delay_ms(1);
+//        
+//        
+//        sendByte(0x36);
+//        __delay_ms(25);
     }
     
 //    //code for testing large line pulldown
