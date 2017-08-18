@@ -56,7 +56,7 @@ void portInit(void) {
                     // ADC enabled
     PORTC = 0x00; // init bits to low
     
-    TRISC = 0X00; // Set all PORT C bits to output
+    TRISC = 0XF0; // Set 7-4 as input, 3-0 as output
     TRISB = 0XFF; // Set all PORT B bits to input
     
     ANSEL = 0x00; //set all analog pins to digital mode
@@ -139,59 +139,40 @@ void start_read(void) {
     target = readByte();
     command = readByte();
     checksum = readByte();
-    if (counter == 0xAF) {
-        PORTCbits.RC3 = 1;
-    }
-//    if (target == 0xAA) {
+//    if (counter == 0xAF) {
+//        PORTCbits.RC3 = 1;
+//    }
+//    if (target == 0x02) {
 //        PORTCbits.RC3 = 1;
 //    }
 //    if (command == 0xAA) {
 //        PORTCbits.RC3 = 1;
 //    }
-//    if (checksum == 0xAA) {
-//        PORTCbits.RC3 = 1;
-//    }
+    if (checksum == 0x45) {
+        PORTCbits.RC3 = 1;
+    }
 }
 
 void main(void) {
     portInit();
     timerInit();
-  
-    TRISC = 0xF0; //7-4 as input, 3-0 as output
     
-    
+    uint8_t testerino;
+    uint8_t test2;
+
     while (1) {
-        
         //check for start
         while (read_data() == false);
         if (read_clock() == false) {
+//            testerino = readByte();
+//            test2 = readByte();
+//            if (test2 == 0x03) {
+//                PORTCbits.RC3 = 1;
+//            }
             start_read();
         }
         else {
             continue;
         }
-        //__delay_us(50);
-        
-//        __delay_us(1500);
-//        counter = readByte();
-//        if (counter == 0x6C) {
-//            PORTCbits.RC0 = 1;
-//        }
     }
-    //PORTCbits.RC0 = 1;
-    
-    while(1);
-  
-    //code to read a single bit
-//    while(1) {
-//        while (PORTCbits.RC5 == 1);
-//
-//        if (PORTBbits.RB6 == 1) 
-//            PORTCbits.RC1 = 1;
-//        if (PORTBbits.RB6 == 0)
-//            PORTCbits.RC1 = 0;
-//        
-//        while (PORTCbits.RC5 == 0);
-//        
-//    }
 }

@@ -10,23 +10,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pic16f527.h>
-#include <stdint.h>  
+#include <stdint.h>
+#include <stdbool.h>
 
- // CONFIG     
- #pragma config FOSC = INTRC_IO  // Oscillator Selection (INTRC with I/O function on OSC2/CLKOUT and 10 us startup time)     
- #pragma config WDTE = OFF       // Watchdog Timer Enable (WDT Disabled)     
- #pragma config CP = OFF          // Code Protection - User Program Memory (Code protection off)     
- #pragma config MCLRE = OFF      // Master Clear Enable (MCLR pin functions as I/O, MCLR internally tied to Vdd)     
- #pragma config IOSCFS = 8MHz    // Internal Oscillator Frequency Select (8 MHz INTOSC Speed)     
- #pragma config CPSW = ON        // Code Protection - Self Writable Memory (Code protection on)     
- #pragma config BOREN = ON       // Brown-out Reset Enable (BOR Enabled)     
- #pragma config DRTEN = ON      // Device Reset Timer Enable (DRT Enabled) 
+// CONFIG     
+#pragma config FOSC = INTRC_IO  // Oscillator Selection (INTRC with I/O function on OSC2/CLKOUT and 10 us startup time)     
+#pragma config WDTE = OFF       // Watchdog Timer Enable (WDT Disabled)     
+#pragma config CP = OFF          // Code Protection - User Program Memory (Code protection off)     
+#pragma config MCLRE = OFF      // Master Clear Enable (MCLR pin functions as I/O, MCLR internally tied to Vdd)     
+#pragma config IOSCFS = 8MHz    // Internal Oscillator Frequency Select (8 MHz INTOSC Speed)     
+#pragma config CPSW = ON        // Code Protection - Self Writable Memory (Code protection on)     
+#pragma config BOREN = ON       // Brown-out Reset Enable (BOR Enabled)     
+#pragma config DRTEN = ON      // Device Reset Timer Enable (DRT Enabled) 
 
- #ifndef _XTAL_FREQ
- #define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
- #define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
- #define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
- #endif
+#ifndef _XTAL_FREQ
+#define _XTAL_FREQ 8000000 //8Mhz FRC internal osc
+#define __delay_us(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000000.0)))     
+#define __delay_ms(x) _delay((unsigned long)((x)*(_XTAL_FREQ/8000.0)))
+#endif
+
+int Count = 0; 
+
 
 void interrupt tc_int(void) {
 //    TMR0bits.TMR0 = 0;
@@ -56,7 +60,7 @@ void portInit(void) {
                     // ADC enabled
     PORTC = 0x00; // init bits to low
     
-    TRISC = 0X00; // Set all PORT C bits to output
+    TRISC = 0XF0; // Set 7-4 as input, 3-0 as output
     TRISB = 0XFF; // Set all PORT B bits to input
     
     ANSEL = 0x00; //set all analog pins to digital mode
@@ -79,8 +83,6 @@ void portInit(void) {
 //    PORTCbits.RC5 = 1; //raise C.5.
 //    PORTCbits.RC1 = 1; //raise C.1.
 }
-
-int Count = 0; 
 
 void clock_low(void) {
     TRISC = 0x00; //setting clock low, setting as output
@@ -112,6 +114,7 @@ void start_condition(void) {
     clock_high();
     five_delay();
     data_high();
+    __delay_ms(1);
 }
 
 void stop_condition(void) {
@@ -122,6 +125,7 @@ void stop_condition(void) {
     data_high();
     five_delay();
     clock_high();
+    __delay_ms(10);
 }
 
 void sendByte(uint8_t byte2send) {
@@ -143,7 +147,13 @@ void sendByte(uint8_t byte2send) {
         __delay_us(50);
         i += 1;
     }
-    PORTCbits.RC0 = 1;
+}
+
+void sendPacket(uint8_t counter, uint8_t target, uint8_t command, uint8_t checksum) {
+    sendByte(counter);
+    sendByte(target);
+    sendByte(command);
+    sendByte(checksum);
 }
 
 void main(void) {
@@ -156,24 +166,8 @@ void main(void) {
     //code to send a full command (3 or 4 bytes)
     while(1) {
         start_condition();
-        __delay_ms(1);
-        sendByte(0xAF);
-        sendByte(0x55);
-        sendByte(0x55);
-        sendByte(0x55);
-        __delay_ms(1);
+        sendPacket(0xAA, 0x02, 0x42, 0x45);
         stop_condition();
-        __delay_ms(10);
-//        TRISC = 0x00; //setting clock low, setting as output
-//        PORTCbits.RC5 = 0;
-//        __delay_ms(1);
-//        //__delay_us(1500);
-//        TRISC = 0xF0; //setting clock high, setting as input
-//        __delay_ms(1);
-//        
-//        
-//        sendByte(0x36);
-//        __delay_ms(25);
     }
     
 //    //code for testing large line pulldown
